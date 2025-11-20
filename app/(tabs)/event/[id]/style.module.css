@@ -1,0 +1,87 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.backButton {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: black;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.backButton:hover {
+    text-decoration: underline;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.info {
+    padding: 1rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.description {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.meta p {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0.3rem 0;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+}
+.joinButton {
+    width: 100%;
+    background-color: #007bff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+/* Адаптивность для телефонов */
+@media (max-width: 600px) {
+    .card {
+        border-radius: 8px;
+    }
+
+    .image {
+        height: 150px;
+    }
+
+    .title {
+        font-size: 1.2rem;
+    }
+
+    .description {
+        font-size: 0.9rem;
+    }
+
+    .meta p {
+        font-size: 0.8rem;
+    }
+}

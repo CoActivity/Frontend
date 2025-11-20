@@ -1,0 +1,122 @@
+.container {
+    padding: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.backButton {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #0070f3;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+input {
+    background-color: white;
+}
+.card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.description {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.meta p {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0.3rem 0;
+}
+
+.joinButton {
+    padding: 0.6rem 1rem;
+    background-color: #0070f3;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background 0.2s;
+}
+
+.joinButton:hover:not(:disabled) {
+    background-color: #005bb5;
+}
+
+.joinButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.participants {
+    margin-top: 1rem;
+}
+
+.participants h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.participants ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.participants li {
+    font-size: 0.9rem;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 600px) {
+    .card {
+        border-radius: 8px;
+    }
+
+    .image {
+        height: 150px;
+    }
+
+    .title {
+        font-size: 1.2rem;
+    }
+
+    .description {
+        font-size: 0.9rem;
+    }
+
+    .meta p {
+        font-size: 0.8rem;
+    }
+
+    .joinButton {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+}
