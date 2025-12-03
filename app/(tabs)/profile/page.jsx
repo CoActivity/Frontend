@@ -622,7 +622,7 @@ export default function ProfilePage() {
     }, [])
 
     const handleCreateGroup = useCallback(async (eventBody) => {
-        const res = await fetch('http://localhost:8005/api/v1/groups', {
+        const res = await fetch('http://localhost:8003/api/v1/groups', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
