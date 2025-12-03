@@ -124,7 +124,7 @@ export default function GroupDetailPage() {
                             <ul>
                                 {members.map(member => (
                                     <li key={member.id} className={styles.memberItem}>
-                                        <div className={styles.avatar}>{member.name[0]}</div>
+                                        <div className={styles.avatar}>A</div>
                                         <span>{member.name}</span>
                                     </li>
                                 ))}
