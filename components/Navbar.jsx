@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react'; // Добавляем useMemo, useState, useEffect
+import { useState, useEffect, useMemo } from 'react';
 import styles from './Navbar.module.css';
 import { Home, Users, Calendar, User, LogIn } from 'lucide-react'; // Добавляем LogIn
 
-// Основные элементы навигации
 const baseNavItems = [
     { name: 'Главная', path: '/', icon: Home },
     { name: 'Мои комнаты', path: '/rooms', icon: Users },
