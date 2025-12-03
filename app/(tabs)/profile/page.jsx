@@ -235,9 +235,16 @@ const FullScreenModal = ({ open, title, onClose, children, onSubmitLabel = 'Со
     )
 }
 
+function convertLocalToUtcString(localString) {
+    if (!localString) return null;
+    const dateWithSeconds = `${localString}:00`;
+    const date = new Date(dateWithSeconds);
+    return date.toISOString().slice(0, 19) + 'Z';
+}
+
 const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
     const [form, setForm] = useState({
-        type: 'GROUP',
+        type: 'LONG_TURM',
         name: '',
         description: '',
         imageUrl: '',
@@ -253,37 +260,16 @@ const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
         price: 0
     })
 
-    useEffect(() => {
-        if (!open) {
-            // reset
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setForm({
-                type: 'GROUP',
-                name: '',
-                description: '',
-                imageUrl: '',
-                accessType: 'public',
-                latitude: null,
-                longitude: null,
-                startTime: '',
-                endTime: '',
-                address: '',
-                maxParticipants: 10,
-                interests: [],
-                ageRestriction: 0,
-                price: 0
-            })
-        }
-    }, [open])
-
-    const handleAddressSelect = ({ address, latitude, longitude }) => {
-        setForm(prev => ({ ...prev, address, latitude, longitude }))
-    }
-
     const submit = async () => {
         try {
+            const utcStartTime = convertLocalToUtcString(form.startTime)
+            const utcEndTime = convertLocalToUtcString(form.endTime)
+
             const body = {
                 ...form,
+                startTime: utcStartTime,
+                endTime: utcEndTime,
+
                 latitude: Number(form.latitude),
                 longitude: Number(form.longitude),
                 maxParticipants: Number(form.maxParticipants),
@@ -291,13 +277,13 @@ const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
                 price: Number(form.price),
                 interests: (form.interests || []).map(i => Number(i))
             }
+
             await onCreate(body)
             onClose()
         } catch (e) {
             alert('Ошибка создания: ' + (e.message || e))
         }
     }
-
     return (
         <FullScreenModal open={open} title="Создать группу" onClose={onClose}>
             <div className={styles.formGrid}>
