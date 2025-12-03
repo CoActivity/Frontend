@@ -203,7 +203,7 @@ export default function EventsPage() {
             <div className={styles.eventList}>
                 {filteredEvents.map(event => (
                     <div
-                        key={event.eventId}
+                        key={event.groupId}
                         className={styles.eventCard}
                         onClick={() => navigateToGroupPage(event)}
                     >
