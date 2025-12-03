@@ -5,36 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import styles from './style.module.css';
 import {MoveLeft} from "lucide-react";
 
-const fallbackGroup = {
-    groupId: 0,
-    name: "Пример группы",
-    description: "Описание группы отсутствует",
-    imageUrl: "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13",
-    type: "EVENT",
-    accessType: "public",
-    status: "planned",
-    startTime: "2025-11-20T00:41:16.689Z",
-    endTime: "2025-11-20T00:41:16.689Z",
-    address: "Неизвестно",
-    latitude: 55.7558,
-    longitude: 37.6176,
-    maxParticipants: 10,
-    currentParticipants: 0,
-    interests: [],
-    ageRestriction: 0,
-    price: 0,
-    requirements: "",
-};
-
-const fallbackMembers = [
-    { id: 1, name: "Alice" },
-    { id: 2, name: "Bob" },
-    { id: 3, name: "Charlie" },
-    { id: 4, name: "David" },
-];
-
 export default function GroupDetailPage() {
-    const { groupId } = useParams();
     const router = useRouter();
 
     const [group, setGroup] = useState(null);
@@ -44,7 +15,8 @@ export default function GroupDetailPage() {
     const [joining, setJoining] = useState(false);
     const [joined, setJoined] = useState(false);
 
-    const param = useParams()
+    const param = useParams();
+    console.log(param.id)
     useEffect(() => {
         const fetchGroup = async () => {
             setLoading(true);
@@ -57,13 +29,12 @@ export default function GroupDetailPage() {
                 setGroup(data);
             } catch (err) {
                 console.error(err);
-                setGroup(fallbackGroup);
             } finally {
                 setLoading(false);
             }
         };
         fetchGroup();
-    }, [groupId]);
+    }, [param.id]);
 
     useEffect(() => {
         const fetchMembers = async () => {
@@ -77,13 +48,12 @@ export default function GroupDetailPage() {
                 setMembers(data || []);
             } catch (err) {
                 console.error(err);
-                setMembers(fallbackMembers);
             } finally {
                 setMembersLoading(false);
             }
         };
         fetchMembers();
-    }, [groupId]);
+    }, [param.id]);
 
     const handleJoin = async () => {
         setJoining(true);
@@ -121,7 +91,7 @@ export default function GroupDetailPage() {
 
             <div className={styles.card}>
                 <img
-                    src={group.imageUrl || fallbackGroup.imageUrl}
+                    src={group.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
                     alt={group.name}
                     className={styles.image}
                 />

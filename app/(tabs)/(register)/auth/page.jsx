@@ -76,7 +76,7 @@ const LoginPage = () => {
                 });
 
                 setTimeout(() => {
-                    router.push('/');
+                    window.location.replace('/');
                 }, 1000);
 
             } else {
@@ -158,7 +158,7 @@ const LoginPage = () => {
 
                 <div className="divider">Или</div>
 
-                <Link href="/reg" passHref legacyBehavior>
+                <Link href="/reg" passHref>
                     <a className="secondary-button">
                         Создать новый аккаунт
                     </a>
