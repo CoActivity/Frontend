@@ -81,7 +81,7 @@ export default function EventDetailPage() {
 
             <div className={styles.card}>
                 <img
-                    src={event.imageUrl || fallbackEvent.imageUrl}
+                    src={event.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
                     alt={event.name}
                     className={styles.image}
                 />
