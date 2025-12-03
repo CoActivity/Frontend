@@ -26,10 +26,6 @@ export default function EventDetailPage() {
                 if (!res.ok) throw new Error('Ошибка загрузки события');
                 const data = await res.json();
                 setEvent(data);
-
-                if (res.ok) {
-                    setIsJoined(true);
-                }
             } catch (err) {
                 console.error(err);
                 setEvent(fallbackEvent);
@@ -61,7 +57,9 @@ export default function EventDetailPage() {
                 ...prev,
                 participants: [...(prev.participants || []), data.user || { name: 'Вы' }]
             }));
-            alert(event.accessType === 'private' ? 'Заявка отправлена' : 'Вы присоединились к мероприятию');
+            if (res.ok) {
+                setIsJoined(true);
+            }
         } catch (err) {
             console.error(err);
         } finally {
