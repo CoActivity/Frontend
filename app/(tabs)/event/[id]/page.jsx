@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './style.module.css';
-import { MoveLeft } from "lucide-react";
+import { MoveLeft, CheckCircle } from "lucide-react";
+
+const API_BASE_URL = 'http://localhost:8005/api/v1/events';
 
 const fallbackEvent = {
     eventId: 2,
@@ -31,73 +33,137 @@ const fallbackEvent = {
 };
 
 export default function EventDetailPage() {
-    const { eventId } = useParams();
+    const params = useParams();
     const router = useRouter();
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);
-    const param = useParams();
+    const [error, setError] = useState(null);
+    const [isJoined, setIsJoined] = useState(false);
+
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : null;
+    const eventId = params.id;
 
     useEffect(() => {
+        if (!eventId) return;
+
         const fetchEvent = async () => {
             setLoading(true);
+            setError(null);
             try {
-                const res = await fetch(`http://localhost:8005/api/v1/events/${param.id}`, {
-                    headers: {
-                        'Authorization': localStorage.getItem('user_id')
-                    }
+                const res = await fetch(`${API_BASE_URL}/${eventId}`, {
+                    headers: { 'Authorization': userId || '' }
                 });
                 if (!res.ok) throw new Error('Ошибка загрузки события');
                 const data = await res.json();
                 setEvent(data);
+
+                if (data.participants.some(p => String(p.id) === String(userId))) {
+                    setIsJoined(true);
+                }
+
             } catch (err) {
-                console.error(err);
+                console.error("Ошибка загрузки:", err);
                 setEvent(fallbackEvent);
+                setError('Не удалось загрузить данные события.');
             } finally {
                 setLoading(false);
             }
         };
         fetchEvent();
-    }, [eventId]);
+    }, [eventId, userId]);
+
 
     const handleJoin = async () => {
-        if (!event) return;
+        if (!event || !userId) {
+            setError('Для участия необходимо войти в аккаунт.');
+            return;
+        }
+
+        if (isJoined) return;
+
         setJoining(true);
+        setError(null);
+
         try {
-            const res = await fetch(`http://localhost:8005/api/v1/events/${param.id}/participants`, {
+            const res = await fetch(`${API_BASE_URL}/${eventId}/participants`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: localStorage.getItem('user_id')
+                    Authorization: userId
                 },
                 body: JSON.stringify({
                     action: 'join',
                     message: event.accessType === 'private' ? 'Хочу присоединиться' : ''
                 })
             });
-            if (!res.ok) throw new Error('Не удалось присоединиться');
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Не удалось присоединиться к мероприятию.');
+            }
+
+            setIsJoined(true);
+
             const data = await res.json();
             setEvent(prev => ({
                 ...prev,
-                participants: [...(prev.participants || []), data.user || { name: 'Вы' }]
+                participants: [...(prev.participants || []), data.user || { id: userId, name: 'Вы' }]
             }));
-            alert(event.accessType === 'private' ? 'Заявка отправлена' : 'Вы присоединились к мероприятию');
+
         } catch (err) {
-            console.error(err);
+            console.error("Ошибка присоединения:", err);
+            setError(err.message || 'Произошла сетевая ошибка при попытке присоединения.');
         } finally {
             setJoining(false);
         }
+    };
+
+    const getButtonText = () => {
+        if (joining) return 'Отправка...';
+
+        if (isJoined) {
+            return 'Вы присоединились к мероприятию';
+        }
+
+        return event.accessType === 'private' ? 'Подать заявку' : 'Присоединиться';
     };
 
     if (loading) {
         return <p className={styles.loading}>Загрузка события...</p>;
     }
 
+    const renderJoinNotification = () => {
+        if (isJoined) {
+            const message = event.accessType === 'private'
+                ? 'Ваша заявка на участие отправлена и ожидает одобрения.'
+                : 'Вы успешно присоединились к мероприятию!';
+
+            return (
+                <div className={styles.successNotification}>
+                    <CheckCircle size={24} />
+                    <p>{message}</p>
+                </div>
+            );
+        }
+        if (error) {
+            return (
+                <div className={styles.errorNotification}>
+                    <p>Ошибка: {error}</p>
+                </div>
+            );
+        }
+        return null;
+    };
+
+
     return (
         <div className={styles.container}>
             <button className={styles.backButton} onClick={() => router.back()}>
-                <MoveLeft />
+                <MoveLeft /> Назад
             </button>
+
+            {renderJoinNotification()}
 
             <div className={styles.card}>
                 <img
@@ -114,14 +180,15 @@ export default function EventDetailPage() {
                         <p><strong>Дата и время:</strong> {new Date(event.startTime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                         {event.price > 0 && <p><strong>Цена:</strong> {event.price} ₽</p>}
                         {event.ageRestriction > 0 && <p><strong>Возрастное ограничение:</strong> {event.ageRestriction}+</p>}
+                        <p><strong>Участников:</strong> {event.participants.length} / {event.maxParticipants}</p>
                     </div>
 
                     <button
                         className={styles.joinButton}
                         onClick={handleJoin}
-                        disabled={joining}
+                        disabled={joining || isJoined}
                     >
-                        {joining ? 'Отправка...' : (event.accessType === 'private' ? 'Подать заявку' : 'Присоединиться')}
+                        {getButtonText()}
                     </button>
                 </div>
             </div>
