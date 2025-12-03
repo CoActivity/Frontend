@@ -621,6 +621,26 @@ export default function ProfilePage() {
         return created
     }, [])
 
+    const handleCreateGroup = useCallback(async (eventBody) => {
+        const res = await fetch('http://localhost:8005/api/v1/groups', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: localStorage.getItem('user_id')
+            },
+            body: JSON.stringify(eventBody)
+        })
+        console.log(eventBody)
+        if (!res.ok) {
+            const txt = await res.text()
+            throw new Error(txt || `Ошибка ${res.status}`)
+        }
+        const created = await res.json()
+        // простое уведомление
+        alert('Создано: ' + (created.name || created.id || 'успешно'))
+        return created
+    }, [])
+
     const handleLogout = () => {
         localStorage.removeItem('user_id')
         window.location.href = '/auth'
@@ -684,7 +704,7 @@ export default function ProfilePage() {
             <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} user={user} interests={interestsList}
                               onSave={handleSaveProfile}/>
             <CreateGroupModal open={groupOpen} onClose={() => setGroupOpen(false)} interests={interestsList}
-                              onCreate={handleCreateEvent}/>
+                              onCreate={handleCreateGroup}/>
             <CreateEventModal open={eventOpen} onClose={() => setEventOpen(false)} interests={interestsList}
                               onCreate={handleCreateEvent}/>
         </div>
