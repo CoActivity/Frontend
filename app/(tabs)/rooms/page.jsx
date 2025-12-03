@@ -36,7 +36,7 @@ const fallbackGroups = [
 function GroupCard({ group, onClick }) {
     return (
         <div className={styles.groupCard} onClick={() => onClick(group)}>
-            <img src={group.imageUrl} alt={group.name} className={styles.groupImage} />
+            <img src={group.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13} alt={group.name} className={styles.groupImage"} />
             <div className={styles.groupInfo}>
                 <h3>{group.name}</h3>
                 <p>{group.description}</p>
