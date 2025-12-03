@@ -3,26 +3,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import styles from './style.module.css'
 
-
-const fetchJSON = async (url, opts = {}) => {
-    const auth = localStorage.getItem('user_id')
-
-    const res = await fetch(url, {
-        ...opts,
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: auth,
-            ...(opts.headers || {}),
-        }
-    })
-
-    if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`HTTP ${res.status}: ${text}`)
-    }
-    return res.json()
-}
-
 const debounce = (fn, ms = 300) => {
     let t
     return (...args) => {
@@ -155,7 +135,6 @@ const AddressAutocomplete = ({ value, onChangeAddress, onSelectPlace }) => {
     )
 }
 
-/* ---------- Edit Profile Modal ---------- */
 const EditProfileModal = ({ open, onClose, user, interests, onSave }) => {
     const [form, setForm] = useState({
         username: '',
@@ -174,7 +153,7 @@ const EditProfileModal = ({ open, onClose, user, interests, onSave }) => {
                 age: user.age ?? '',
                 city: user.city || '',
                 bio: user.bio || '',
-                interestIds: user.interestIds ? [...user.interestIds] : ['Шахматы'],
+                interestIds: user.interestIds ? [...user.interestIds] : [1],
                 preferences: user.preferences || { language: 'ru' }
             })
         }
@@ -199,8 +178,7 @@ const EditProfileModal = ({ open, onClose, user, interests, onSave }) => {
     }
 
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modalCard}>
+        <FullScreenModal open={open} onClose={onClose}>
                 <h3 className={styles.modalTitle}>Редактировать профиль</h3>
 
                 <label className={styles.label}>
@@ -210,7 +188,7 @@ const EditProfileModal = ({ open, onClose, user, interests, onSave }) => {
 
                 <label className={styles.label}>
                     Возраст
-                    <input className={styles.input} type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} />
+                    <input style={{marginLeft: '20px'}} className={styles.input} type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} />
                 </label>
 
                 <label className={styles.label}>
@@ -242,8 +220,7 @@ const EditProfileModal = ({ open, onClose, user, interests, onSave }) => {
                     <button className={styles.btnPrimary} onClick={handleSave}>Сохранить</button>
                     <button className={styles.btnGhost} onClick={onClose}>Отмена</button>
                 </div>
-            </div>
-        </div>
+        </FullScreenModal>
     )
 }
 
@@ -252,12 +229,6 @@ const FullScreenModal = ({ open, title, onClose, children, onSubmitLabel = 'Со
     return (
         <div className={styles.fullscreenOverlay}>
             <div className={styles.fullscreenCard}>
-                <div className={styles.fullscreenHeader}>
-                    <h3>{title}</h3>
-                    <div>
-                        <button className={styles.btnGhost} onClick={onClose}>Закрыть</button>
-                    </div>
-                </div>
                 <div className={styles.fullscreenBody}>{children}</div>
             </div>
         </div>
@@ -378,17 +349,17 @@ const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
                     </div>
                 )}
 
-                <label className={styles.label}>
+                <label className={styles.other}>
                     Максимум участников
                     <input className={styles.input} type="number" value={form.maxParticipants} onChange={e => setForm({...form, maxParticipants: e.target.value})} />
                 </label>
 
-                <label className={styles.label}>
+                <label className={styles.other}>
                     Ограничение по возрасту
                     <input className={styles.input} type="number" value={form.ageRestriction} onChange={e => setForm({...form, ageRestriction: e.target.value})} />
                 </label>
 
-                <label className={styles.label}>
+                <label className={styles.other}>
                     Цена
                     <input className={styles.input} type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
                 </label>
@@ -547,43 +518,73 @@ export default function ProfilePage() {
     const [groupOpen, setGroupOpen] = useState(false)
     const [eventOpen, setEventOpen] = useState(false)
 
+
     useEffect(() => {
-        let mounted = true
+        let mounted = true;
+
         const load = async () => {
-            setLoading(true)
+            setLoading(true);
+
             try {
-                const [u, ints] = await Promise.all([
-                    fetchJSON('http://localhost:8002/api/v1/users/me'),
-                    fetchJSON('http://localhost:8001/api/v1/interests')
-                ])
-                if (!mounted) return
-                setUser(u)
+                const userRes = await fetch(`http://localhost:8002/api/v1/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': localStorage.getItem('user_id')
+                    }
+                });
+
+
+                const u = await userRes.json();
+
+                const response = await fetch('http://localhost:8001/api/v1/interests', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': localStorage.getItem('user_id')
+                    }
+                });
+                const ints = await response.json();
+                console.log("rdf", ints)
+
+                if (!mounted) return;
+
+                setUser(u);
+
                 const normalized = Array.isArray(ints) ? ints.map(it => {
-                    if (typeof it === 'string') return { id: ints.indexOf(it) + 1, name: it }
-                    return it
-                }) : []
-                setInterestsList(normalized)
+                    if (typeof it === 'string') return { id: ints.indexOf(it) + 1, name: it };
+                    return it;
+                }) : [];
+                setInterestsList(normalized);
+
             } catch (e) {
-                console.error('load error', e)
+                console.error('load error', e);
                 setUser({
                     userId: 0,
-                    username: 'Мое имя',
+                    username: 'Гость (ошибка)',
                     avatarUrl: '',
                     age: 0,
                     city: '',
                     bio: '',
                     interestIds: []
-                })
+                });
             } finally {
-                if (mounted) setLoading(false)
+                if (mounted) setLoading(false);
             }
         }
-        load()
-        return () => { mounted = false }
-    }, [])
+
+        if (localStorage.getItem('user_id')) {
+            load();
+        } else {
+            console.warn('Токен авторизации отсутствует в localStorage.');
+            setLoading(false);
+        }
+
+        return () => { mounted = false };
+    }, []);
 
     const handleSaveProfile = useCallback(async (patchBody) => {
-        const res = await fetch('/api/v1/users/me', {
+        const res = await fetch('http://localhost:8002/api/v1/users/me', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -591,7 +592,7 @@ export default function ProfilePage() {
             },
             body: JSON.stringify(patchBody)
         })
-
+        console.log(patchBody)
         if (!res.ok) {
             const txt = await res.text()
             throw new Error(txt || `Ошибка ${res.status}`)
@@ -603,7 +604,7 @@ export default function ProfilePage() {
     console.log(localStorage.getItem('user_id'))
 
     const handleCreateEvent = useCallback(async (eventBody) => {
-        const res = await fetch('/api/v1/events', {
+        const res = await fetch('http://localhost:8005/api/v1/events', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -611,7 +612,7 @@ export default function ProfilePage() {
             },
             body: JSON.stringify(eventBody)
         })
-
+        console.log(eventBody)
         if (!res.ok) {
             const txt = await res.text()
             throw new Error(txt || `Ошибка ${res.status}`)
@@ -631,7 +632,7 @@ export default function ProfilePage() {
     if (loading) {
         return <div className={styles.root}><div className={styles.center}>Загрузка профиля…</div></div>
     }
-
+    console.log(interestsList)
     return (
         <div className={styles.root}>
             <div className={styles.headerBar}>

@@ -43,7 +43,9 @@ export default function EventDetailPage() {
             setLoading(true);
             try {
                 const res = await fetch(`http://localhost:8005/api/v1/events/${param.id}`, {
-                    headers: { Authorization: localStorage.getItem('user_id') }
+                    headers: {
+                        'Authorization': localStorage.getItem('user_id')
+                    }
                 });
                 if (!res.ok) throw new Error('Ошибка загрузки события');
                 const data = await res.json();

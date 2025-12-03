@@ -60,8 +60,10 @@ export default function MyGroupsPage() {
         const fetchAdminGroups = async () => {
             setLoadingAdmin(true);
             try {
-                const res = await fetch('http://localhost:8003/api/v1/users/me/admin-groups', {
-                    headers: { Authorization: localStorage.getItem('user_id') }
+                const res = await fetch('http://localhost:8002/api/v1/users/me/admin-groups', {
+                    headers: {
+                        Authorization: localStorage.getItem('user_id')
+                    }
                 });
                 if (!res.ok) throw new Error('Ошибка');
                 const data = await res.json();
@@ -77,7 +79,7 @@ export default function MyGroupsPage() {
         const fetchMyGroups = async () => {
             setLoadingMy(true);
             try {
-                const res = await fetch('http://localhost:8003/api/v1/users/me/groups', {
+                const res = await fetch('http://localhost:8002/api/v1/users/me/groups', {
                     headers: { Authorization: localStorage.getItem('user_id') }
                 });
                 if (!res.ok) throw new Error('Ошибка');

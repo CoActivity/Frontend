@@ -144,7 +144,7 @@ export default function EventsPage() {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: localStorage.getItem('user_id')
+                        'Authorization': localStorage.getItem('user_id')
                     },
                 });
                 if (!res.ok) throw new Error('Ошибка при загрузке событий');

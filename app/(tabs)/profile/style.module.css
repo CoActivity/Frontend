@@ -58,6 +58,7 @@
     padding:8px 12px;
     border-radius:10px;
     cursor:pointer;
+    color: black;
 }
 .btnDanger{
     background:var(--danger);
@@ -142,17 +143,30 @@
 .modalTitle{ margin:0 0 12px 0; font-size:18px; }
 
 /* label / inputs */
-.label{ display:block; margin-bottom:12px; font-size:13px; color:var(--muted); }
+.label{
+    display:block;
+    margin-bottom:12px;
+    font-size:13px;
+    color:var(--muted);
+}
+.other{
+    display:block;
+    margin-bottom:12px;
+    font-size:13px;
+    color:var(--muted);
+}
+
 .input{
     color: black;
     width:100%;
     padding:10px 12px;
     margin-top:6px;
     border-radius:10px;
-    border:1px solid rgba(15,23,42,0.06);
+    border:1px solid rgba(15,23,42,0.5);
     background:transparent;
     box-sizing:border-box;
     font-size:14px;
+
 }
 .input[type="number"]{ max-width:160px; }
 
