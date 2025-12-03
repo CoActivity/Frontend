@@ -43,9 +43,6 @@ export default function EventDetailPage() {
 
             } catch (err) {
                 console.error(err);
-                setEvent(fallbackEvent);
-                setParticipants(fallbackEvent.participants);
-                setIsJoined(fallbackEvent.participants.some(p => p.userId.toString() === currentUserId));
             } finally {
                 setLoading(false);
             }
