@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import './style.css';
 
 const API_LOGIN_URL = 'http://localhost:8001/api/v1/auth/login';
@@ -22,6 +23,10 @@ const LoginPage = () => {
         setFormData(prev => ({
             ...prev,
             [name]: value,
+        }));
+        setErrors(prev => ({
+            ...prev,
+            [name]: ''
         }));
         if (message.type === 'error') {
             setMessage({ type: '', text: '' });
@@ -105,7 +110,7 @@ const LoginPage = () => {
     return (
         <div className="login-container">
             <form className="login-form" onSubmit={handleSubmit}>
-                <h2>Вход в аккаунт</h2>
+                <h2>Авторизация</h2>
 
                 {message.text && (
                     <p className={`server-message ${message.type === 'error' ? 'error-message' : 'success-message'}`}>
@@ -123,6 +128,7 @@ const LoginPage = () => {
                         onChange={handleChange}
                         placeholder="user@example.com"
                         disabled={loading}
+                        className={errors.email ? 'input-error' : ''}
                     />
                     {errors.email && <p className="error-message">{errors.email}</p>}
                 </div>
@@ -137,17 +143,27 @@ const LoginPage = () => {
                         onChange={handleChange}
                         placeholder="••••••••"
                         disabled={loading}
+                        className={errors.password ? 'input-error' : ''}
                     />
                     {errors.password && <p className="error-message">{errors.password}</p>}
                 </div>
 
                 <button
                     type="submit"
-                    className="login-button"
+                    className="primary-button"
                     disabled={loading}
                 >
                     {loading ? 'Вход...' : 'Войти'}
                 </button>
+
+                <div className="divider">Или</div>
+
+                <Link href="/reg" passHref legacyBehavior>
+                    <a className="secondary-button">
+                        Создать новый аккаунт
+                    </a>
+                </Link>
+
             </form>
         </div>
     );

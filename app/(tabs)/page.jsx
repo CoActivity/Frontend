@@ -140,12 +140,22 @@ export default function EventsPage() {
 
     const filteredEvents = useMemo(() => {
         return events.filter(event => {
-            const matchesName = event.name.toLowerCase().includes(searchName.trim().toLowerCase());
-            const matchesCity = event.city.toLowerCase().includes(searchCity.trim().toLowerCase());
-            const matchesDate = filterDate
-                ? new Date(event.startTime).toLocaleDateString('sv-SE') === filterDate
+            const matchesName = searchName
+                ? (event.name ?? '').toLowerCase().includes(searchName.trim().toLowerCase())
                 : true;
-            const matchesAge = filterAge ? event.ageRestriction <= parseInt(filterAge) : true;
+
+            const matchesCity = searchCity
+                ? (event.city ?? '').toLowerCase().includes(searchCity.trim().toLowerCase())
+                : true;
+
+            const matchesDate = filterDate
+                ? new Date(event.startTime ?? '').toLocaleDateString('sv-SE') === filterDate
+                : true;
+
+            const matchesAge = filterAge
+                ? (event.ageRestriction ?? 0) <= parseInt(filterAge)
+                : true;
+
             return matchesName && matchesCity && matchesDate && matchesAge;
         });
     }, [events, searchName, searchCity, filterDate, filterAge]);

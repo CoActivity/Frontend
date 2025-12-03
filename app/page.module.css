@@ -26,7 +26,6 @@
   align-items: flex-start;
   justify-content: space-between;
   background-color: var(--foreground);
-  padding: 120px 60px;
 }
 
 .intro {

@@ -2,18 +2,47 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react'; // Добавляем useMemo, useState, useEffect
 import styles from './Navbar.module.css';
-import { Home, Users, Calendar, User } from 'lucide-react';
+import { Home, Users, Calendar, User, LogIn } from 'lucide-react'; // Добавляем LogIn
 
-const navItems = [
+// Основные элементы навигации
+const baseNavItems = [
     { name: 'Главная', path: '/', icon: Home },
     { name: 'Мои комнаты', path: '/rooms', icon: Users },
     { name: 'Мероприятия', path: '/events', icon: Calendar },
-    { name: 'Профиль', path: '/profile', icon: User },
 ];
+
+const authItem = { name: 'Профиль', path: '/profile', icon: User };
+const guestItem = { name: 'Войти', path: '/auth', icon: LogIn };
 
 export default function Navbar() {
     const pathname = usePathname();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsClient(true);
+        if (typeof window !== 'undefined' && window.localStorage.getItem('user_id')) {
+            setIsAuthenticated(true);
+        } else {
+            setIsAuthenticated(false);
+        }
+    }, []);
+
+    const navItems = useMemo(() => {
+        if (!isClient) {
+            return [...baseNavItems, authItem];
+        }
+
+        if (isAuthenticated) {
+            return [...baseNavItems, authItem];
+        } else {
+            return [...baseNavItems, guestItem];
+        }
+    }, [isAuthenticated, isClient]);
+
 
     return (
         <nav className={styles.nav}>

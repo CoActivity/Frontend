@@ -601,8 +601,6 @@ export default function ProfilePage() {
         setUser(updated)
     }, [])
 
-    console.log(localStorage.getItem('user_id'))
-
     const handleCreateEvent = useCallback(async (eventBody) => {
         const res = await fetch('http://localhost:8005/api/v1/events', {
             method: 'POST',
@@ -637,10 +635,10 @@ export default function ProfilePage() {
         <div className={styles.root}>
             <div className={styles.headerBar}>
                 <div className={styles.headerLeft}>
-                    <img className={styles.avatar} src={user.avatarUrl || 'https://avatars.mds.yandex.net/i?id=cc7896daa9232bd32dd4f9ac0d2c9b951655c0f2-9181226-images-thumbs&n=13'} alt="avatar" />
+                    <img className={styles.avatar} src={user?.avatarUrl || 'https://avatars.mds.yandex.net/i?id=cc7896daa9232bd32dd4f9ac0d2c9b951655c0f2-9181226-images-thumbs&n=13'} alt="avatar" />
                     <div>
-                        <div className={styles.username}>{user.username || 'Мое имя'}</div>
-                        <div className={styles.sub}>{user.city || 'Москва' + ' · '}{user.age || 18 + ' лет'}</div>
+                        <div className={styles.username}>{user?.username || 'Мое имя'}</div>
+                        <div className={styles.sub}>{user?.city || 'Москва' + ' · '}{user?.age || 18 + ' лет'}</div>
                     </div>
                 </div>
             </div>
@@ -648,7 +646,7 @@ export default function ProfilePage() {
             <main className={styles.container}>
                 <section className={styles.card}>
                     <h2 className={styles.cardTitle}>О себе</h2>
-                    <p className={styles.bio}>{user.bio || 'Некоторая очень важная информация обо мне и то что я люблю котиков'}</p>
+                    <p className={styles.bio}>{user?.bio || 'Некоторая очень важная информация обо мне и то что я люблю котиков'}</p>
 
                     <div className={styles.sectionRow}>
                         <div>
@@ -664,7 +662,7 @@ export default function ProfilePage() {
                         <div>
                             <div className={styles.smallLabel}>Предпочтения</div>
                             <div className={styles.prefBox}>
-                                Язык: {user.preferences?.language || 'Руссий'}
+                                Язык: {user?.preferences?.language || 'Руссий'}
                             </div>
                         </div>
                     </div>
@@ -672,8 +670,8 @@ export default function ProfilePage() {
 
                 <section className={styles.card}>
                     <h2 className={styles.cardTitle}>Активность</h2>
-                    <div className={styles.tinyText}>Рейтинг: {user.rating ?? '—'}</div>
-                    <div className={styles.tinyText}>Создан: {new Date(user.createdAt).toLocaleString()}</div>
+                    <div className={styles.tinyText}>Рейтинг: {user?.rating ?? '—'}</div>
+                    <div className={styles.tinyText}>Создан: {new Date(user?.createdAt).toLocaleString()}</div>
                 </section>
                 <div className={styles.headerRight}>
                     <button className={styles.btn} onClick={() => setEditOpen(true)}>Редактировать профиль</button>

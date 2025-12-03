@@ -1,122 +1,177 @@
-.container {
-    padding: 1rem;
-    max-width: 800px;
-    margin: 0 auto;
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --card-background: #ffffff;
+    --text-color: #343a40;
+    --error-color: #dc3545;
+    --divider-color: #adb5bd;
 }
 
-.backButton {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: #0070f3;
-    cursor: pointer;
-    margin-bottom: 1rem;
+body {
+    background-color: var(--background-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
 }
-input {
+
+.login-container {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-form {
+    width: 120%;
+    margin-left: -10%;
+    max-width: 800px;
+    background: var(--card-background);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.login-form h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95em;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1em;
+    color: var(--text-color);
+    transition: border-color 0.3s, box-shadow 0.3s;
     background-color: white;
 }
-.card {
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
+
+.input-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
-.image {
+.input-group .input-error {
+    border-color: var(--error-color) !important;
+}
+
+.error-message {
+    color: var(--error-color);
+    font-size: 0.85em;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.server-message {
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+.error-message.server-message {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--error-color);
+    color: var(--error-color);
+}
+.success-message {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+
+
+.help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+.primary-button {
     width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.title {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.description {
-    font-size: 1rem;
-    color: #333;
-    margin-bottom: 1rem;
-}
-
-.meta p {
-    font-size: 0.9rem;
-    color: #555;
-    margin: 0.3rem 0;
-}
-
-.joinButton {
-    padding: 0.6rem 1rem;
-    background-color: #0070f3;
-    color: #fff;
+    padding: 14px;
+    background-color: var(--primary-color);
+    color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 1.1em;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 1rem;
-    transition: background 0.2s;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-top: 10px;
 }
 
-.joinButton:hover:not(:disabled) {
-    background-color: #005bb5;
+.primary-button:hover {
+    background-color: #0056b3;
 }
 
-.joinButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.primary-button:active {
+    transform: translateY(1px);
 }
 
-.participants {
-    margin-top: 1rem;
-}
-
-.participants h3 {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.participants ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.participants li {
-    font-size: 0.9rem;
-    padding: 0.2rem 0;
-    border-bottom: 1px solid #eee;
-}
-
-.loading {
+.secondary-button {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-top: 10px;
     text-align: center;
-    padding: 2rem;
-    font-size: 1.2rem;
+    text-decoration: none;
+    display: block;
 }
 
-@media (max-width: 600px) {
-    .card {
-        border-radius: 8px;
-    }
+.secondary-button:hover {
+    background-color: #5a6268;
+}
 
-    .image {
-        height: 150px;
-    }
+.secondary-button:active {
+    transform: translateY(1px);
+}
 
-    .title {
-        font-size: 1.2rem;
-    }
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 25px 0;
+    color: var(--divider-color);
+}
 
-    .description {
-        font-size: 0.9rem;
-    }
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e9ecef;
+}
 
-    .meta p {
-        font-size: 0.8rem;
-    }
+.divider:not(:empty)::before {
+    margin-right: 0.5em;
+}
 
-    .joinButton {
-        width: 100%;
-        font-size: 0.9rem;
-    }
+.divider:not(:empty)::after {
+    margin-left: 0.5em;
 }
