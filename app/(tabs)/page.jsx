@@ -161,7 +161,7 @@ export default function EventsPage() {
     }, [events, searchName, searchCity, filterDate, filterAge]);
 
     const navigateToGroupPage = (event) => {
-        router.push(`/group/${event.eventId}`);
+        router.push(`/group/${event.groupId}`);
     };
 
     if (loading) return <p className={styles.loading}>Загрузка событий...</p>;
