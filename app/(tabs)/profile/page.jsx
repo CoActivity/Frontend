@@ -260,6 +260,10 @@ const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
         price: 0
     })
 
+    const handleAddressSelect = ({ address, latitude, longitude }) => {
+        setForm(prev => ({ ...prev, address, latitude, longitude }))
+    }
+
     const submit = async () => {
         try {
             const utcStartTime = convertLocalToUtcString(form.startTime)
