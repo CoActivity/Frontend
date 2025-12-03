@@ -85,3 +85,59 @@
         font-size: 0.8rem;
     }
 }
+.participantsCard {
+    width: 100%;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.participantsTitle {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.participantsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.participantItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.participantItem:last-child {
+    border-bottom: none;
+}
+
+.participantName {
+    font-weight: 500;
+    color: #444;
+}
+
+.participantRole {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+}
+
+.organizer {
+    background-color: #28a745;
+}
+
+.participant {
+    background-color: #007bff;
+}
