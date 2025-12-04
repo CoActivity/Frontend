@@ -138,8 +138,11 @@ export default function GroupDetailPage() {
                             <p>Загрузка участников...</p>
                         ) : (
                             <ul>
-                                {members.map(member => (
-                                    <li key={member.userId || member.id} className={styles.memberItem}>
+                                {members.map((member, idx) => (
+                                    <li
+                                        key={`${member.userId ?? member.id ?? 'member'}-${idx}`}
+                                        className={styles.memberItem}
+                                    >
                                         <div className={styles.avatar}>A</div>
                                         <span>{member.username || member.userId}</span>
                                     </li>
