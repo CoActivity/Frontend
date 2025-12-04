@@ -69,12 +69,28 @@ export default function EventDetailPage() {
                     message: event.accessType === 'private' ? 'Хочу присоединиться' : ''
                 })
             });
-            if (!res.ok) throw new Error('Не удалось присоединиться');
-            const data = await res.json();
+            if (res.status === 204) {
+                setIsJoined(true);
+                setParticipants(prev => [
+                    ...(prev || []),
+                    { id: currentUserId, name: 'Вы', role: 'participant', status: 'confirmed' }
+                ]);
+                return;
+            }
+            if (!res.ok) {
+                const txt = await res.text();
+                const message = txt || 'Не удалось присоединиться';
+                if (message.toLowerCase().includes('already')) {
+                    setIsJoined(true);
+                }
+                console.warn('join failed', message);
+                return;
+            }
+            const data = await res.json().catch(() => ({}));
             setParticipants(prev => [
                 ...(prev || []),
                 {
-                    ...data.user,
+                    ...(data.user || { id: currentUserId }),
                     role: 'participant',
                     status: 'confirmed',
                     name: data.user?.name || 'Вы'
@@ -143,14 +159,17 @@ export default function EventDetailPage() {
                 <div className={styles.participantsCard}>
                     <h2 className={styles.participantsTitle}>Участники ({participants.length})</h2>
                     <ul className={styles.participantsList}>
-                        {participants.map(p => (
-                            <li key={p.userId} className={styles.participantItem}>
-                                <div className={styles.participantName}>{p.name || `Пользователь ${p.userId}`}</div>
-                                <div className={`${styles.participantRole} ${styles[p.role]}`}>
-                                    {getRoleTranslation(p.role)}
-                                </div>
-                            </li>
-                        ))}
+                        {participants.map((p, idx) => {
+                            const key = p.userId ?? p.id ?? idx;
+                            return (
+                                <li key={key} className={styles.participantItem}>
+                                    <div className={styles.participantName}>{p.name || `Пользователь ${p.userId ?? p.id ?? ''}`}</div>
+                                    <div className={`${styles.participantRole} ${styles[p.role]}`}>
+                                        {getRoleTranslation(p.role)}
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             </div>

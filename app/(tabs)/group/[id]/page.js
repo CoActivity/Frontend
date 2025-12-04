@@ -24,7 +24,11 @@ export default function GroupDetailPage() {
                 const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}`, {
                     headers: { Authorization: localStorage.getItem('user_id') }
                 });
-                if (!res.ok) throw new Error('Ошибка загрузки группы');
+                if (!res.ok) {
+                    console.warn('Failed to load group', res.status, await res.text());
+                    setGroup(null);
+                    return;
+                }
                 const data = await res.json();
                 setGroup(data);
             } catch (err) {
@@ -43,11 +47,16 @@ export default function GroupDetailPage() {
                 const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}/members`, {
                     headers: { Authorization: localStorage.getItem('user_id') }
                 });
-                if (!res.ok) throw new Error('Ошибка загрузки участников');
+                if (!res.ok) {
+                    console.warn('Failed to load members', res.status, await res.text());
+                    setMembers([]);
+                    return;
+                }
                 const data = await res.json();
-                setMembers(data || []);
+                setMembers(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error(err);
+                setMembers([]);
             } finally {
                 setMembersLoading(false);
             }
@@ -58,21 +67,28 @@ export default function GroupDetailPage() {
     const handleJoin = async () => {
         setJoining(true);
         try {
+            const userId = Number(localStorage.getItem('user_id'));
             const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}/join`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     Authorization: localStorage.getItem('user_id')
-                },
-                body: JSON.stringify({ action: 'join', message: 'Хочу присоединиться!' })
+                }
             });
+            if (res.status === 204) {
+                setJoined(true);
+                setGroup(prev => prev ? {
+                    ...prev,
+                    memberCount: (prev.memberCount ?? prev.memberIds?.length ?? 0) + 1,
+                    memberIds: prev.memberIds ? [...prev.memberIds, userId] : [userId]
+                } : prev);
+                setMembers(prev => [{ userId, username: 'Вы', role: 'member' }, ...prev]);
+                return;
+            }
             if (!res.ok) throw new Error('Ошибка при присоединении');
+            const data = await res.json();
             setJoined(true);
-            setGroup(prev => ({
-                ...prev,
-                currentParticipants: prev.currentParticipants + 1
-            }));
-            setMembers(prev => [{ id: 0, name: 'Вы' }, ...prev]);
+            setGroup(data);
+            setMembers(prev => [{ userId, username: 'Вы', role: 'member' }, ...prev]);
         } catch (err) {
             console.error(err);
             alert('Не удалось присоединиться к группе');
@@ -82,6 +98,7 @@ export default function GroupDetailPage() {
     };
 
     if (loading) return <p className={styles.loading}>Загрузка группы...</p>;
+    if (!group) return <p className={styles.loading}>Группа недоступна.</p>;
 
     return (
         <div className={styles.container}>
@@ -91,7 +108,7 @@ export default function GroupDetailPage() {
 
             <div className={styles.card}>
                 <img
-                    src={group.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
+                    src={group.avatarUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
                     alt={group.name}
                     className={styles.image}
                 />
@@ -101,12 +118,11 @@ export default function GroupDetailPage() {
                     <p className={styles.description}>{group.description}</p>
 
                     <div className={styles.meta}>
-                        <p><strong>Местоположение:</strong> {group.address}</p>
-                        <p><strong>Дата и время:</strong> {new Date(group.startTime).toLocaleString()}</p>
-                        {group.price > 0 && <p><strong>Цена:</strong> {group.price} ₽</p>}
-                        {group.ageRestriction > 0 && <p><strong>Возрастное ограничение:</strong> {group.ageRestriction}+</p>}
-                        <p><strong>Участники:</strong> {group.currentParticipants}/{group.maxParticipants}</p>
-                    </div>
+                        <p><strong>Местоположение:</strong> {group.address || '—'}</p>
+                    <p><strong>Создано:</strong> {group.createdAt ? new Date(group.createdAt).toLocaleString() : '—'}</p>
+                    <p><strong>Тип:</strong> {group.type}</p>
+                    <p><strong>Участники:</strong> {(group.memberCount ?? group.memberIds?.length ?? 0)}/{group.maxMembers ?? 0}</p>
+                </div>
 
                     <button
                         className={styles.joinButton}
@@ -123,9 +139,9 @@ export default function GroupDetailPage() {
                         ) : (
                             <ul>
                                 {members.map(member => (
-                                    <li key={member.id} className={styles.memberItem}>
+                                    <li key={member.userId || member.id} className={styles.memberItem}>
                                         <div className={styles.avatar}>A</div>
-                                        <span>{member.username}</span>
+                                        <span>{member.username || member.userId}</span>
                                     </li>
                                 ))}
                             </ul>

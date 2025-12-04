@@ -244,41 +244,22 @@ function convertLocalToUtcString(localString) {
 
 const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
     const [form, setForm] = useState({
-        type: 'LONG_TURM',
+        type: 'PUBLIC',
         name: '',
         description: '',
-        imageUrl: '',
-        accessType: 'public',
-        latitude: null,
-        longitude: null,
-        startTime: '',
-        endTime: '',
-        address: '',
-        maxParticipants: 10,
-        interests: [],
-        ageRestriction: 0,
-        price: 0
+        avatarUrl: '',
+        maxMembers: 100,
+        interests: []
     })
-
-    const handleAddressSelect = ({ address, latitude, longitude }) => {
-        setForm(prev => ({ ...prev, address, latitude, longitude }))
-    }
 
     const submit = async () => {
         try {
-            const utcStartTime = convertLocalToUtcString(form.startTime)
-            const utcEndTime = convertLocalToUtcString(form.endTime)
-
             const body = {
-                ...form,
-                startTime: utcStartTime,
-                endTime: utcEndTime,
-
-                latitude: Number(form.latitude),
-                longitude: Number(form.longitude),
-                maxParticipants: Number(form.maxParticipants),
-                ageRestriction: Number(form.ageRestriction),
-                price: Number(form.price),
+                type: form.type,
+                name: form.name,
+                description: form.description,
+                avatarUrl: form.avatarUrl,
+                maxMembers: Number(form.maxMembers) || 100,
                 interests: (form.interests || []).map(i => Number(i))
             }
 
@@ -303,55 +284,21 @@ const CreateGroupModal = ({ open, onClose, interests, onCreate }) => {
 
                 <label className={styles.label}>
                     Изображение (URL)
-                    <input className={styles.input} value={form.imageUrl} onChange={e => setForm({...form, imageUrl: e.target.value})} />
+                    <input className={styles.input} value={form.avatarUrl} onChange={e => setForm({...form, avatarUrl: e.target.value})} />
                 </label>
 
                 <label className={styles.label}>
-                    Тип доступа
-                    <select className={styles.input} value={form.accessType} onChange={e => setForm({...form, accessType: e.target.value})}>
-                        <option value="public">public</option>
-                        <option value="private">private</option>
+                    Тип
+                    <select className={styles.input} value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                        <option value="PUBLIC">public</option>
+                        <option value="PRIVATE">private</option>
+                        <option value="DIRECT">direct</option>
                     </select>
                 </label>
 
-                <label className={styles.label}>
-                    Время начала
-                    <input className={styles.input} type="datetime-local" value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})} />
-                </label>
-
-                <label className={styles.label}>
-                    Время окончания
-                    <input className={styles.input} type="datetime-local" value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})} />
-                </label>
-
-                <label className={styles.label}>
-                    Адрес
-                    <AddressAutocomplete value={form.address} onChangeAddress={(v)=>setForm({...form, address:v})} onSelectPlace={handleAddressSelect} />
-                </label>
-
-                {form.latitude && form.longitude && (
-                    <div className={styles.mapPreview}>
-                        <iframe
-                            title="map"
-                            className={styles.mapIframe}
-                            src={`https://www.openstreetmap.org/export/embed.html?marker=${form.latitude}%2C${form.longitude}&layer=mapnik`}
-                        />
-                    </div>
-                )}
-
                 <label className={styles.other}>
                     Максимум участников
-                    <input className={styles.input} type="number" value={form.maxParticipants} onChange={e => setForm({...form, maxParticipants: e.target.value})} />
-                </label>
-
-                <label className={styles.other}>
-                    Ограничение по возрасту
-                    <input className={styles.input} type="number" value={form.ageRestriction} onChange={e => setForm({...form, ageRestriction: e.target.value})} />
-                </label>
-
-                <label className={styles.other}>
-                    Цена
-                    <input className={styles.input} type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
+                    <input className={styles.input} type="number" value={form.maxMembers} onChange={e => setForm({...form, maxMembers: e.target.value})} />
                 </label>
 
                 <div className={styles.label}>
@@ -612,21 +559,30 @@ export default function ProfilePage() {
     }, [])
 
     const handleCreateGroup = useCallback(async (eventBody) => {
+        const payload = {
+            type: eventBody.type || 'PUBLIC',
+            name: eventBody.name,
+            description: eventBody.description,
+            avatarUrl: eventBody.avatarUrl,
+            maxMembers: Number(eventBody.maxMembers) || 100,
+            interests: eventBody.interests || [],
+            isActive: true
+        }
+
         const res = await fetch('http://localhost:8003/api/v1/groups', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: localStorage.getItem('user_id')
             },
-            body: JSON.stringify(eventBody)
+            body: JSON.stringify(payload)
         })
-        console.log(eventBody)
+        console.log(payload)
         if (!res.ok) {
             const txt = await res.text()
             throw new Error(txt || `Ошибка ${res.status}`)
         }
         const created = await res.json()
-        // простое уведомление
         alert('Создано: ' + (created.name || created.id || 'успешно'))
         return created
     }, [])

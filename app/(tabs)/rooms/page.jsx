@@ -9,24 +9,11 @@ const fallbackGroups = [
         groupId: 0,
         name: "Пример группы",
         description: "Описание группы отсутствует",
-        imageUrl: "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13",
-        type: "EVENT",
-        accessType: "public",
-        status: "planned",
-        startTime: "2025-11-20T01:00:55.617Z",
-        endTime: "2025-11-20T01:00:55.617Z",
-        address: "Неизвестно",
-        latitude: 0,
-        longitude: 0,
-        creatorId: 0,
-        maxParticipants: 0,
-        currentParticipants: 5,
+        avatarUrl: "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13",
+        type: "PUBLIC",
+        maxMembers: 100,
+        memberCount: 5,
         interests: [1,2,3],
-        ageRestriction: 0,
-        price: 0,
-        requirements: "string",
-        topics: ["string"],
-        rules: "string",
         isActive: true,
         createdAt: "2025-11-20T01:00:55.617Z",
         updatedAt: "2025-11-20T01:00:55.617Z"
@@ -36,13 +23,16 @@ const fallbackGroups = [
 function GroupCard({ group, onClick }) {
     return (
         <div className={styles.groupCard} onClick={() => onClick(group)}>
-            <img src={group.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13} alt={group.name} className={styles.groupImage"} />
+            <img
+                src={group.avatarUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
+                alt={group.name}
+                className={styles.groupImage}
+            />
             <div className={styles.groupInfo}>
                 <h3>{group.name}</h3>
                 <p>{group.description}</p>
-                <p><strong>Местоположение:</strong> {group.address}</p>
-                <p><strong>Дата и время:</strong> {new Date(group.startTime).toLocaleString()}</p>
-                <p><strong>Участники:</strong> {group.currentParticipants}/{group.maxParticipants}</p>
+                <p><strong>Тип:</strong> {group.type}</p>
+                <p><strong>Участники:</strong> {group.memberCount ?? group.memberIds?.length ?? 0}/{group.maxMembers ?? 0}</p>
             </div>
         </div>
     );
@@ -65,9 +55,13 @@ export default function MyGroupsPage() {
                         Authorization: localStorage.getItem('user_id')
                     }
                 });
-                if (!res.ok) throw new Error('Ошибка');
+                if (!res.ok) {
+                    console.warn('Failed to load admin groups', res.status, await res.text());
+                    setAdminGroups(fallbackGroups);
+                    return;
+                }
                 const data = await res.json();
-                setAdminGroups(data.length ? data : fallbackGroups);
+                setAdminGroups(Array.isArray(data) && data.length ? data : fallbackGroups);
             } catch (err) {
                 console.error(err);
                 setAdminGroups(fallbackGroups);
@@ -82,9 +76,13 @@ export default function MyGroupsPage() {
                 const res = await fetch('http://localhost:8002/api/v1/users/me/groups', {
                     headers: { Authorization: localStorage.getItem('user_id') }
                 });
-                if (!res.ok) throw new Error('Ошибка');
+                if (!res.ok) {
+                    console.warn('Failed to load groups', res.status, await res.text());
+                    setMyGroups(fallbackGroups);
+                    return;
+                }
                 const data = await res.json();
-                setMyGroups(data.length ? data : fallbackGroups);
+                setMyGroups(Array.isArray(data) && data.length ? data : fallbackGroups);
             } catch (err) {
                 console.error(err);
                 setMyGroups(fallbackGroups);
