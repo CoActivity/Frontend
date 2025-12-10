@@ -184,20 +184,20 @@ export default function EventsPage() {
                     onChange={e => setSearchCity(e.target.value)}
                     className={styles.input}
                 />
-                <input
-                    type="date"
-                    value={filterDate}
-                    onChange={e => setFilterDate(e.target.value)}
-                    className={styles.input}
-                />
-                <input
-                    type="number"
-                    min="0"
-                    placeholder="Возрастное ограничение"
-                    value={filterAge}
-                    onChange={e => setFilterAge(e.target.value)}
-                    className={styles.input}
-                />
+                {/*<input*/}
+                {/*    type="date"*/}
+                {/*    value={filterDate}*/}
+                {/*    onChange={e => setFilterDate(e.target.value)}*/}
+                {/*    className={styles.input}*/}
+                {/*/>*/}
+                {/*<input*/}
+                {/*    type="number"*/}
+                {/*    min="0"*/}
+                {/*    placeholder="Возрастное ограничение"*/}
+                {/*    value={filterAge}*/}
+                {/*    onChange={e => setFilterAge(e.target.value)}*/}
+                {/*    className={styles.input}*/}
+                {/*/>*/}
             </div>
 
             <div className={styles.eventList}>
@@ -217,11 +217,6 @@ export default function EventsPage() {
                             <p className={styles.cardDetails}>
                                 {event.description?.substring(0, 80)}
                                 {event.description && event.description.length > 80 ? '...' : ''}
-                            </p>
-                            <p className={styles.cardCity}>Город: {event.city}</p>
-                            <p className={styles.cardDate}>
-                                {new Date(event.startTime).toLocaleDateString()}{" "}
-                                {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}
                             </p>
                             {event.ageRestriction > 0 && <p><strong>Возраст:</strong> {event.ageRestriction}+</p>}
                         </div>

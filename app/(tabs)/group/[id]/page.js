@@ -1,9 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './style.module.css';
-import {MoveLeft} from "lucide-react";
+import { MoveLeft } from "lucide-react";
+
+const getRoleTranslation = (role) => {
+    switch (role) {
+        case 'owner':
+            return 'Владелец';
+        case 'admin':
+            return 'Администратор';
+        case 'member':
+            return 'Участник';
+        case 'pending':
+            return 'Ожидает';
+        default:
+            return role;
+    }
+};
 
 export default function GroupDetailPage() {
     const router = useRouter();
@@ -13,82 +28,128 @@ export default function GroupDetailPage() {
     const [loading, setLoading] = useState(true);
     const [membersLoading, setMembersLoading] = useState(true);
     const [joining, setJoining] = useState(false);
-    const [joined, setJoined] = useState(false);
+
+    const [isJoined, setIsJoined] = useState(false);
+
+    const [currentUserId, setCurrentUserId] = useState(null);
 
     const param = useParams();
-    console.log(param.id)
-    useEffect(() => {
-        const fetchGroup = async () => {
-            setLoading(true);
-            try {
-                const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}`, {
-                    headers: { Authorization: localStorage.getItem('user_id') }
-                });
-                if (!res.ok) {
-                    console.warn('Failed to load group', res.status, await res.text());
-                    setGroup(null);
-                    return;
-                }
-                const data = await res.json();
-                setGroup(data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchGroup();
-    }, [param.id]);
+    const groupId = param.id;
 
     useEffect(() => {
-        const fetchMembers = async () => {
-            setMembersLoading(true);
-            try {
-                const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}/members`, {
-                    headers: { Authorization: localStorage.getItem('user_id') }
-                });
-                if (!res.ok) {
-                    console.warn('Failed to load members', res.status, await res.text());
-                    setMembers([]);
-                    return;
-                }
-                const data = await res.json();
-                setMembers(Array.isArray(data) ? data : []);
-            } catch (err) {
-                console.error(err);
-                setMembers([]);
-            } finally {
-                setMembersLoading(false);
-            }
-        };
-        fetchMembers();
-    }, [param.id]);
+        if (typeof window !== 'undefined') {
+            const userId = localStorage.getItem('user_id');
+            setCurrentUserId(userId);
+        }
+    }, []);
 
-    const handleJoin = async () => {
-        setJoining(true);
+    const fetchGroup = useCallback(async (id, userId) => {
+        setLoading(true);
+        if (!id || !userId) {
+            setLoading(false);
+            return;
+        }
+
         try {
-            const userId = Number(localStorage.getItem('user_id'));
-            const res = await fetch(`http://localhost:8003/api/v1/groups/${param.id}/join`, {
-                method: 'POST',
-                headers: {
-                    Authorization: localStorage.getItem('user_id')
-                }
+            const res = await fetch(`http://localhost:8003/api/v1/groups/${id}`, {
+                headers: { Authorization: userId }
             });
-            if (res.status === 204) {
-                setJoined(true);
-                setGroup(prev => prev ? {
-                    ...prev,
-                    memberCount: (prev.memberCount ?? prev.memberIds?.length ?? 0) + 1,
-                    memberIds: prev.memberIds ? [...prev.memberIds, userId] : [userId]
-                } : prev);
-                setMembers(prev => [{ userId, username: 'Вы', role: 'member' }, ...prev]);
+            if (!res.ok) {
+                console.warn('Failed to load group', res.status, await res.text());
+                setGroup(null);
                 return;
             }
-            if (!res.ok) throw new Error('Ошибка при присоединении');
             const data = await res.json();
-            setJoined(true);
             setGroup(data);
-            setMembers(prev => [{ userId, username: 'Вы', role: 'member' }, ...prev]);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchMembers = useCallback(async (id, userId) => {
+        setMembersLoading(true);
+        if (!id || !userId) {
+            setMembersLoading(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`http://localhost:8003/api/v1/groups/${id}/members`, {
+                headers: { Authorization: userId }
+            });
+            if (!res.ok) {
+                console.warn('Failed to load members', res.status, await res.text());
+                setMembers([]);
+                return;
+            }
+            const data = await res.json();
+            const fetchedMembers = Array.isArray(data) ? data : [];
+            setMembers(fetchedMembers);
+
+            const joinedStatus = fetchedMembers.some(
+                p => p.userId && p.userId.toString() === userId
+            );
+            setIsJoined(joinedStatus);
+
+        } catch (err) {
+            console.error(err);
+            setMembers([]);
+        } finally {
+            setMembersLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (groupId && currentUserId) {
+            fetchGroup(groupId, currentUserId);
+            fetchMembers(groupId, currentUserId);
+        } else if (groupId && currentUserId === null && !loading) {
+            // Если ID еще не загружен (в начале)
+            setLoading(false);
+            setMembersLoading(false);
+        }
+    }, [groupId, currentUserId, fetchGroup, fetchMembers]);
+
+    const handleJoin = async () => {
+        if (isJoined || !group || !currentUserId) return;
+
+        setJoining(true);
+        try {
+            const userIdNum = Number(currentUserId);
+
+            const res = await fetch(`http://localhost:8003/api/v1/groups/${groupId}/join`, {
+                method: 'POST',
+                headers: {
+                    Authorization: currentUserId
+                }
+            });
+
+            if (!res.ok && res.status !== 204) {
+                throw new Error('Ошибка при присоединении');
+            }
+
+            const newMember = {
+                userId: userIdNum,
+                username: 'Вы',
+                role: 'member'
+            };
+
+            setIsJoined(true);
+            setMembers(prev => [newMember, ...prev.filter(m => m.userId.toString() !== currentUserId)]); // Добавляем себя и убираем дубликат, если есть
+
+            setGroup(prev => prev ? {
+                ...prev,
+                memberCount: (prev.memberCount ?? prev.memberIds?.length ?? 0) + 1,
+                memberIds: prev.memberIds ? [...prev.memberIds, userIdNum] : [userIdNum]
+            } : prev);
+
+            if (res.status !== 204) {
+                const data = await res.json();
+                setGroup(data);
+            }
+
         } catch (err) {
             console.error(err);
             alert('Не удалось присоединиться к группе');
@@ -115,38 +176,43 @@ export default function GroupDetailPage() {
 
                 <div className={styles.info}>
                     <h1 className={styles.title}>{group.name}</h1>
-                    <p className={styles.description}>{group.description}</p>
+                    <p className={styles.description}>{group.description || 'Здесь должно было быть описание'}</p>
 
                     <div className={styles.meta}>
-                        <p><strong>Местоположение:</strong> {group.address || '—'}</p>
-                    <p><strong>Создано:</strong> {group.createdAt ? new Date(group.createdAt).toLocaleString() : '—'}</p>
-                    <p><strong>Тип:</strong> {group.type}</p>
-                    <p><strong>Участники:</strong> {(group.memberCount ?? group.memberIds?.length ?? 0)}/{group.maxMembers ?? 0}</p>
-                </div>
+                        <p><strong>Описание:</strong> {group.address || '—'}</p>
+                        <p><strong>Создано:</strong> {group.createdAt ? new Date(group.createdAt).toLocaleString() : '—'}</p>
+                        <p><strong>Тип:</strong> {group.type}</p>
+                        <p><strong>Участники:</strong> {(group.memberCount ?? group.memberIds?.length ?? members.length)}/{group.maxMembers ?? '∞'}</p>
+                    </div>
 
                     <button
-                        className={styles.joinButton}
+                        className={`${styles.joinButton} ${isJoined ? styles.joined : ''}`}
                         onClick={handleJoin}
-                        disabled={joining || joined}
+                        disabled={joining || isJoined}
                     >
-                        {joined ? 'Вы присоединились' : joining ? 'Присоединение...' : 'Присоединиться'}
+                        {isJoined ? 'Вы присоединились' : joining ? 'Присоединение...' : 'Присоединиться'}
                     </button>
 
                     <div className={styles.participants}>
-                        <h4>Участники</h4>
+                        <h4 style={{marginTop: '20px'}}>Участники</h4>
                         {membersLoading ? (
                             <p>Загрузка участников...</p>
                         ) : (
-                            <ul>
-                                {members.map((member, idx) => (
-                                    <li
-                                        key={`${member.userId ?? member.id ?? 'member'}-${idx}`}
-                                        className={styles.memberItem}
-                                    >
-                                        <div className={styles.avatar}>A</div>
-                                        <span>{member.username || member.userId}</span>
-                                    </li>
-                                ))}
+                            <ul className={styles.participantsList}>
+                                {members.map(p => {
+                                    const isCurrentUser = p.userId && currentUserId && p.userId.toString() === currentUserId;
+                                    return (
+                                        <li key={p.userId || `guest-${p.name}`} className={styles.participantItem}>
+                                            <div className={styles.participantName}>
+                                                {p.name || `Пользователь ${p.userId}`}
+                                                {isCurrentUser && <span className={styles.youTag}> (Вы)</span>}
+                                            </div>
+                                            <div className={`${styles.participantRole} ${styles[p.role]}`}>
+                                                {getRoleTranslation(p.role)}
+                                            </div>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         )}
                     </div>

@@ -5,20 +5,30 @@ import { useParams, useRouter } from 'next/navigation';
 import styles from './style.module.css';
 import { MoveLeft } from "lucide-react";
 
-
 export default function EventDetailPage() {
     const router = useRouter();
     const param = useParams();
     const eventId = param.id;
+
     const [event, setEvent] = useState(null);
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);
     const [isJoined, setIsJoined] = useState(false);
-    const currentUserId = localStorage.getItem('user_id');
+
+    const [currentUserId, setCurrentUserId] = useState(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const userId = localStorage.getItem('user_id');
+            setCurrentUserId(userId);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchEventAndParticipants = async () => {
+            if (!currentUserId) return;
+
             setLoading(true);
             try {
                 const eventRes = await fetch(`http://localhost:8005/api/v1/events/${eventId}`, {
@@ -28,19 +38,16 @@ export default function EventDetailPage() {
                 const eventData = await eventRes.json();
                 setEvent(eventData);
 
-                const userJoined = (eventData.participants || []).some(p => p.userId.toString() === currentUserId);
-                setIsJoined(userJoined);
-
                 const participantsRes = await fetch(`http://localhost:8005/api/v1/events/${eventId}/participants`, {
                     headers: { 'Authorization': currentUserId }
                 });
+
                 if (participantsRes.ok) {
                     const participantsData = await participantsRes.json();
                     setParticipants(participantsData.participants || []);
                 } else {
                     setParticipants(eventData.participants || []);
                 }
-
             } catch (err) {
                 console.error(err);
             } finally {
@@ -48,15 +55,19 @@ export default function EventDetailPage() {
             }
         };
 
-        if (eventId) {
-            fetchEventAndParticipants();
-        }
+        if (eventId && currentUserId) fetchEventAndParticipants();
     }, [eventId, currentUserId]);
 
+    useEffect(() => {
+        if (!currentUserId || !participants) return;
+        const joined = participants.some(p => p.userId?.toString() === currentUserId.toString());
+        setIsJoined(joined);
+    }, [participants, currentUserId]);
 
     const handleJoin = async () => {
-        if (!event) return;
+        if (!event || !currentUserId) return;
         setJoining(true);
+
         try {
             const res = await fetch(`http://localhost:8005/api/v1/events/${eventId}/participants`, {
                 method: 'POST',
@@ -69,18 +80,18 @@ export default function EventDetailPage() {
                     message: event.accessType === 'private' ? 'Хочу присоединиться' : ''
                 })
             });
+
             if (!res.ok) throw new Error('Не удалось присоединиться');
             const data = await res.json();
-            setParticipants(prev => [
-                ...(prev || []),
-                {
-                    ...data.user,
-                    role: 'participant',
-                    status: 'confirmed',
-                    name: data.user?.name || 'Вы'
-                }
-            ]);
-            setIsJoined(true);
+
+            const newUser = {
+                userId: currentUserId,
+                name: data.user?.name || 'Вы',
+                role: data.role || 'participant',
+                status: data.status || 'confirmed'
+            };
+
+            setParticipants(prev => [...prev, newUser]);
         } catch (err) {
             console.error(err);
         } finally {
@@ -97,14 +108,8 @@ export default function EventDetailPage() {
         }
     };
 
-    if (loading) {
-        return <p className={styles.loading}>Загрузка события...</p>;
-    }
-
-    if (!event) {
-        return <p className={styles.error}>Событие не найдено.</p>;
-    }
-
+    if (loading) return <p className={styles.loading}>Загрузка события...</p>;
+    if (!event) return <p className={styles.error}>Событие не найдено.</p>;
 
     return (
         <div className={styles.container}>
@@ -112,13 +117,14 @@ export default function EventDetailPage() {
                 <MoveLeft />
             </button>
 
-            <div className={styles.contentWrapper}> {/* Новый оберточный div */}
+            <div className={styles.contentWrapper}>
                 <div className={styles.card}>
                     <img
                         src={event.imageUrl || "https://avatars.mds.yandex.net/i?id=b4c168ff87afbf8684c309648eb46f3d02ed0e38-5031281-images-thumbs&n=13"}
                         alt={event.name}
                         className={styles.image}
                     />
+
                     <div className={styles.info}>
                         <h1 className={styles.title}>{event.name}</h1>
                         <p className={styles.description}>{event.description}</p>
@@ -131,11 +137,12 @@ export default function EventDetailPage() {
                         </div>
 
                         <button
-                            className={styles.joinButton}
+                            className={`${styles.joinButton} ${isJoined ? styles.joined : ''}`}
                             onClick={handleJoin}
                             disabled={isJoined || joining}
+                            style={isJoined && {backgroundColor: "gray"}}
                         >
-                            {joining ? 'Присоединение...' : isJoined ? 'Вы уже присоединились' : 'Присоединиться'}
+                            {joining ? 'Присоединение...' : isJoined ? 'Вы уже участник' : 'Присоединиться'}
                         </button>
                     </div>
                 </div>
@@ -143,14 +150,20 @@ export default function EventDetailPage() {
                 <div className={styles.participantsCard}>
                     <h2 className={styles.participantsTitle}>Участники ({participants.length})</h2>
                     <ul className={styles.participantsList}>
-                        {participants.map(p => (
-                            <li key={p.userId} className={styles.participantItem}>
-                                <div className={styles.participantName}>{p.name || `Пользователь ${p.userId}`}</div>
-                                <div className={`${styles.participantRole} ${styles[p.role]}`}>
-                                    {getRoleTranslation(p.role)}
-                                </div>
-                            </li>
-                        ))}
+                        {participants.map(p => {
+                            const isCurrentUser = p.userId?.toString() === currentUserId?.toString();
+                            return (
+                                <li key={p.userId || `guest-${p.name}`} className={styles.participantItem}>
+                                    <div className={styles.participantName}>
+                                        {p.name || `Пользователь ${p.userId}`}
+                                        {isCurrentUser && <span className={styles.youTag}> (Вы)</span>}
+                                    </div>
+                                    <div className={`${styles.participantRole} ${styles[p.role]}`}>
+                                        {getRoleTranslation(p.role)}
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             </div>
