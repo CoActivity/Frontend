@@ -159,9 +159,7 @@ const LoginPage = () => {
                 <div className="divider">Или</div>
 
                 <Link href="/reg" passHref>
-                    <a className="secondary-button">
                         Создать новый аккаунт
-                    </a>
                 </Link>
 
             </form>

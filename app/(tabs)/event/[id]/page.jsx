@@ -145,7 +145,7 @@ export default function EventDetailPage() {
                     <ul className={styles.participantsList}>
                         {participants.map(p => (
                             <li key={p.userId} className={styles.participantItem}>
-                                <div className={styles.participantName}>{p.name || `Пользователь ${p.userId}`}</div>
+                                <div className={styles.participantName}>{p.username || `Пользователь ${p.userId}`}</div>
                                 <div className={`${styles.participantRole} ${styles[p.role]}`}>
                                     {getRoleTranslation(p.role)}
                                 </div>
