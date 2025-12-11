@@ -131,19 +131,24 @@ export default function EventDetailPage() {
 
                         <div className={styles.meta}>
                             <p><strong>Место:</strong> {event.city}, {event.address}</p>
-                            <p><strong>Дата и время:</strong> {new Date(event.startTime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                            <p><strong>Дата и время:</strong> {new Date(event.startTime).toLocaleString([], {
+                                dateStyle: 'medium',
+                                timeStyle: 'short'
+                            })}</p>
                             {event.price > 0 && <p><strong>Цена:</strong> {event.price} ₽</p>}
-                            {event.ageRestriction > 0 && <p><strong>Возрастное ограничение:</strong> {event.ageRestriction}+</p>}
+                            {event.ageRestriction > 0 &&
+                                <p><strong>Возрастное ограничение:</strong> {event.ageRestriction}+</p>}
                         </div>
 
                         <button
                             className={`${styles.joinButton} ${isJoined ? styles.joined : ''}`}
                             onClick={handleJoin}
                             disabled={isJoined || joining}
-                            style={isJoined && {backgroundColor: "gray"}}
+                            style={isJoined ? {backgroundColor: "gray"} : {}}
                         >
                             {joining ? 'Присоединение...' : isJoined ? 'Вы уже участник' : 'Присоединиться'}
                         </button>
+
                     </div>
                 </div>
 
