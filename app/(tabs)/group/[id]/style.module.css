@@ -167,3 +167,39 @@
         font-size: 0.8rem;
     }
 }
+.interestsBlock {
+    display: block;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.interestCategory {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.categoryTitle {
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.interestsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interestTag {
+    border: 1px solid #007bff;
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: #007bff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    font-size: 14px;
+}

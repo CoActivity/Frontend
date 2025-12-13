@@ -4,118 +4,28 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from "@/app/(tabs)/events/list.module.css";
 
-const fallbackEvents = {
-    items: [
-        {
-            eventId: 1,
-            name: "Концерт в парке",
-            description: "Красивое выступление в ЦПКиО имени Горького.",
-            imageUrl: "",
-            city: "Москва",
-            address: "ЦПКиО им. Горького",
-            latitude: 55.7558,
-            longitude: 37.6176,
-            accessType: "public",
-            status: "planned",
-            startTime: "2025-11-20T18:00:00.000Z",
-            endTime: "2025-11-20T20:00:00.000Z",
-            maxParticipants: 100,
-            currentParticipants: 0,
-            interests: [1],
-            ageRestriction: 0,
-            price: 0,
-            requirements: "",
-            creatorId: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-        {
-            eventId: 2,
-            name: "IT-митап",
-            description: "Встреча разработчиков по теме Next.js и React-Leaflet.",
-            imageUrl: "",
-            city: "Москва",
-            address: "Сколково",
-            latitude: 55.70,
-            longitude: 37.55,
-            accessType: "public",
-            status: "planned",
-            startTime: "2025-11-21T18:00:00.000Z",
-            endTime: "2025-11-21T20:00:00.000Z",
-            maxParticipants: 50,
-            currentParticipants: 0,
-            interests: [2],
-            ageRestriction: 18,
-            price: 0,
-            requirements: "Регистрация",
-            creatorId: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-        {
-            eventId: 3,
-            name: "Кинопоказ",
-            description: "Открытый показ классики в Сокольниках.",
-            imageUrl: "",
-            city: "Москва",
-            address: "Сокольники",
-            latitude: 55.80,
-            longitude: 37.75,
-            accessType: "public",
-            status: "planned",
-            startTime: "2025-11-22T18:00:00.000Z",
-            endTime: "2025-11-22T20:00:00.000Z",
-            maxParticipants: 150,
-            currentParticipants: 0,
-            interests: [3],
-            ageRestriction: 0,
-            price: 0,
-            requirements: "",
-            creatorId: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-        {
-            eventId: 4,
-            name: "Фестиваль еды",
-            description: "Гастрономическое событие на Красной площади.",
-            imageUrl: "",
-            city: "Москва",
-            address: "Красная площадь",
-            latitude: 55.76,
-            longitude: 37.60,
-            accessType: "public",
-            status: "planned",
-            startTime: "2025-11-23T12:00:00.000Z",
-            endTime: "2025-11-23T18:00:00.000Z",
-            maxParticipants: 200,
-            currentParticipants: 0,
-            interests: [4],
-            ageRestriction: 0,
-            price: 0,
-            requirements: "",
-            creatorId: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-    ],
-    pagination: {
-        limit: 10,
-        offset: 0,
-        total: 4
-    }
-};
-
 export default function EventsPage() {
     const router = useRouter();
+
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [searchName, setSearchName] = useState('');
     const [searchCity, setSearchCity] = useState('');
-    const [filterDate, setFilterDate] = useState('');
-    const [filterAge, setFilterAge] = useState('');
+    const [searchInterest, setSearchInterest] = useState('');
+
+    const [allInterests, setAllInterests] = useState([]);
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem('interests');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) setAllInterests(parsed);
+        } catch {
+            setAllInterests([]);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -124,13 +34,12 @@ export default function EventsPage() {
                 const res = await fetch('http://localhost:8003/api/v1/groups', {
                     headers: { Authorization: localStorage.getItem('user_id') }
                 });
-                if (!res.ok) throw new Error('Ошибка при загрузке событий');
+                if (!res.ok) throw new Error('Ошибка при загрузке');
                 const data = await res.json();
-                setEvents(data.items || data);
+                setEvents(data.items || data || []);
             } catch (err) {
-                console.error(err);
                 setError(err.message);
-                setEvents(fallbackEvents.items);
+                setEvents([]);
             } finally {
                 setLoading(false);
             }
@@ -141,34 +50,37 @@ export default function EventsPage() {
     const filteredEvents = useMemo(() => {
         return events.filter(event => {
             const matchesName = searchName
-                ? (event.name ?? '').toLowerCase().includes(searchName.trim().toLowerCase())
+                ? (event.name ?? '').toLowerCase().includes(searchName.toLowerCase())
                 : true;
 
             const matchesCity = searchCity
-                ? (event.city ?? '').toLowerCase().includes(searchCity.trim().toLowerCase())
+                ? (event.city ?? '').toLowerCase().includes(searchCity.toLowerCase())
                 : true;
 
-            const matchesDate = filterDate
-                ? new Date(event.startTime ?? '').toLocaleDateString('sv-SE') === filterDate
+            const matchesInterest = searchInterest
+                ? (event.interests || []).some(interestId => {
+                    const interest = allInterests.find(
+                        i => Number(i.id) === Number(interestId)
+                    );
+                    return interest?.name
+                        ?.toLowerCase()
+                        .includes(searchInterest.trim().toLowerCase());
+                })
                 : true;
 
-            const matchesAge = filterAge
-                ? (event.ageRestriction ?? 0) <= parseInt(filterAge)
-                : true;
-
-            return matchesName && matchesCity && matchesDate && matchesAge;
+            return matchesName && matchesCity && matchesInterest;
         });
-    }, [events, searchName, searchCity, filterDate, filterAge]);
+    }, [events, searchName, searchCity, searchInterest, allInterests]);
 
     const navigateToGroupPage = (event) => {
         router.push(`/group/${event.groupId}`);
     };
 
     if (loading) return <p className={styles.loading}>Загрузка событий...</p>;
+    if (error) return <p className={styles.loading}>{error}</p>;
 
     return (
         <div className={styles.listViewContainer}>
-            {/* Фильтры */}
             <div className={styles.filters}>
                 <input
                     type="text"
@@ -184,20 +96,13 @@ export default function EventsPage() {
                     onChange={e => setSearchCity(e.target.value)}
                     className={styles.input}
                 />
-                {/*<input*/}
-                {/*    type="date"*/}
-                {/*    value={filterDate}*/}
-                {/*    onChange={e => setFilterDate(e.target.value)}*/}
-                {/*    className={styles.input}*/}
-                {/*/>*/}
-                {/*<input*/}
-                {/*    type="number"*/}
-                {/*    min="0"*/}
-                {/*    placeholder="Возрастное ограничение"*/}
-                {/*    value={filterAge}*/}
-                {/*    onChange={e => setFilterAge(e.target.value)}*/}
-                {/*    className={styles.input}*/}
-                {/*/>*/}
+                <input
+                    type="text"
+                    placeholder="Интересы"
+                    value={searchInterest}
+                    onChange={e => setSearchInterest(e.target.value)}
+                    className={styles.input}
+                />
             </div>
 
             <div className={styles.eventList}>
@@ -212,17 +117,36 @@ export default function EventsPage() {
                             alt={event.name}
                             className={styles.cardImage}
                         />
+
                         <div className={styles.cardInfo}>
                             <h3 className={styles.cardTitle}>{event.name}</h3>
                             <p className={styles.cardDetails}>
-                                {event.description?.substring(0, 80)}
-                                {event.description && event.description.length > 80 ? '...' : ''}
+                                {event.description?.slice(0, 80)}
+                                {event.description?.length > 80 && '…'}
                             </p>
-                            {event.ageRestriction > 0 && <p><strong>Возраст:</strong> {event.ageRestriction}+</p>}
+
+                            {event.interests?.length > 0 && (
+                                <div className={styles.cardInterests}>
+                                    {event.interests.map(id => {
+                                        const it = allInterests.find(
+                                            i => Number(i.id) === Number(id)
+                                        );
+                                        return it ? (
+                                            <span key={id} className={styles.cardInterest}>
+                                                {it.icon} {it.name}
+                                            </span>
+                                        ) : null;
+                                    })}
+                                </div>
+                            )}
                         </div>
+
                         <button
                             className={styles.cardButton}
-                            onClick={(e) => { e.stopPropagation(); navigateToGroupPage(event); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToGroupPage(event);
+                            }}
                         >
                             Подробнее
                         </button>

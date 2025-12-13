@@ -62,47 +62,48 @@ const FullScreenModal = ({ open, title, onClose, children }) => {
     )
 }
 
-const InterestsSelector = ({ available = [], selectedIds = [], onChange, defaultIds }) => {
-    const normalizedAvailable = useMemo(() => (
-        Array.isArray(available) ? available.map(it => ({ ...it, id: Number(it.id) })) : []
-    ), [available])
+const InterestsSelector = ({ available = [], selectedIds = [], onChange }) => {
+    const selected = useMemo(
+        () => new Set((selectedIds || []).map(Number)),
+        [selectedIds]
+    )
 
-    const defaults = useMemo(() => {
-        if (Array.isArray(defaultIds) && defaultIds.length) return defaultIds.map(Number)
-        return normalizedAvailable.filter(a => a.is_default).map(a => Number(a.id))
-    }, [normalizedAvailable, defaultIds])
-
-    const selectedNums = useMemo(() => Array.from(new Set((selectedIds || []).map(Number).filter(Boolean))), [selectedIds])
-
-    const mergedSelected = useMemo(() => {
-        const set = new Set([...defaults, ...selectedNums])
-        return Array.from(set)
-    }, [defaults, selectedNums])
+    const grouped = useMemo(() => {
+        const map = {}
+        available.forEach(i => {
+            if (!map[i.category]) map[i.category] = []
+            map[i.category].push(i)
+        })
+        return map
+    }, [available])
 
     const toggle = (id) => {
-        id = Number(id)
-        if (mergedSelected.includes(id)) {
-            if (defaults.includes(id)) return // Запрещаем снять дефолтные
-            const next = mergedSelected.filter(i => i !== id)
-            onChange?.(next)
-        } else {
-            onChange?.([...mergedSelected, id])
-        }
+        const next = new Set(selected)
+        next.has(id) ? next.delete(id) : next.add(id)
+        onChange(Array.from(next))
     }
 
     return (
-        <div className={styles.interestsGrid}>
-            {normalizedAvailable.map(it => (
-                <button
-                    key={it.id}
-                    type="button"
-                    className={`${styles.tag} ${mergedSelected.includes(it.id) ? styles.tagActive : ''}`}
-                    onClick={() => toggle(it.id)}
-                    aria-pressed={mergedSelected.includes(it.id)}
-                    title={it.name}
-                >
-                    {it.name}
-                </button>
+        <div className={styles.interestsBlock}>
+            {Object.entries(grouped).map(([cat, items]) => (
+                <div key={cat} className={styles.interestCategory}>
+                    <div className={styles.categoryTitle}>{cat}</div>
+                    <div className={styles.interestsGrid}>
+                        {items.map(it => (
+                            <button
+                                key={it.id}
+                                type="button"
+                                onClick={() => toggle(it.id)}
+                                className={`${styles.interestTag} ${
+                                    selected.has(it.id) ? styles.active : ''
+                                }`}
+                            >
+                                <span className={styles.icon}>{it.icon}</span>
+                                {it.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             ))}
         </div>
     )
@@ -256,7 +257,6 @@ const EditProfileModal = ({ open, onClose, user, interests = [], onSave }) => {
         <FullScreenModal open={open} title="Редактировать профиль" onClose={onClose}>
             <div className={styles.formGrid}>
                 <label className={styles.label}>
-                    URL Аватара (если сервер требует Base64, он закодирует этот URL)
                     <input
                         className={styles.input}
                         value={form.avatarUrl}
@@ -457,10 +457,10 @@ export default function ProfilePage() {
     const [editOpen, setEditOpen] = useState(false)
     const [groupOpen, setGroupOpen] = useState(false)
     const [eventOpen, setEventOpen] = useState(false)
-    const [avatarKey, setAvatarKey] = useState(Date.now()); // Ключ для принудительного обновления кэша аватара
+    const [avatarKey, setAvatarKey] = useState(Date.now());
 
 
-    useEffect(() => {
+    useEffect((key, value) => {
         let mounted = true
         const load = async () => {
             setLoading(true)
@@ -471,20 +471,40 @@ export default function ProfilePage() {
                 const userRes = await fetch(`http://localhost:8002/api/v1/users/me`, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': token } })
                 const u = await userRes.json()
 
-                const response = await fetch('http://localhost:8001/api/v1/interests', { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': token } })
-                const ints = await response.json()
+                const response = await fetch('http://localhost:8001/api/v1/interests', {
+                    headers: { Authorization: token }
+                })
 
-                if (!mounted) return
+                const data = await response.json()
 
-                const normalized = Array.isArray(ints) ? ints.map((it, idx) => {
-                    if (typeof it === 'string') return { id: idx + 1, name: it }
-                    return { ...it, id: Number(it.id), name: it.name }
-                }) : []
+                const normalized = Array.isArray(data.interests)
+                    ? data.interests.map(i => ({
+                        id: Number(i.id),
+                        name: i.name,
+                        icon: i.icon,
+                        category: i.category,
+                        is_default: i.is_default
+                    }))
+                    : []
+
+                setInterestsList(normalized)
+
+
+                if (Array.isArray(normalized) && normalized.length > 0) {
+                    try {
+                        localStorage.setItem('interests', JSON.stringify(normalized));
+                    } catch (e) {
+                        console.warn('Не удалось сохранить interests', e);
+                    }
+                } else {
+                    console.warn('interests пустые, не сохраняем', normalized);
+                }
+
+
 
                 setUser(u)
                 setInterestsList(normalized)
 
-                // Обновляем ключ при загрузке данных
                 if (u?.avatarUrl) {
                     setAvatarKey(Date.now());
                 }
@@ -592,16 +612,20 @@ export default function ProfilePage() {
                     <p className={styles.bio}>{user?.bio || 'Некоторая очень важная информация обо мне и то что я люблю котиков'}</p>
 
                     <div className={styles.sectionRow}>
-                        <div>
-                            <div className={styles.smallLabel}>Интересы</div>
-                            <div className={styles.tagsWrap}>
-                                {Array.isArray(user?.interestIds) && user.interestIds.length ? (
-                                    user.interestIds.map(id => <span key={id} className={styles.tag}>{interestNameById(id)}</span>)
-                                ) : (
-                                    <span className={styles.tag}>—</span>
-                                )}
-                            </div>
+                        <div className={styles.tagsWrap}>
+                            {user?.interestIds?.length
+                                ? user.interestIds.map(id => {
+                                    const it = interestsList.find(i => i.id === id)
+                                    return (
+                                        <span key={id} className={styles.userTag}>
+                                            {it?.icon} {it?.name}
+                                        </span>
+                                    )
+                                })
+                                : <span className={styles.muted}>—</span>
+                            }
                         </div>
+
 
                         <div>
                             <div className={styles.smallLabel}>Предпочтения</div>
