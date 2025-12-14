@@ -257,6 +257,7 @@ const EditProfileModal = ({ open, onClose, user, interests = [], onSave }) => {
         <FullScreenModal open={open} title="Редактировать профиль" onClose={onClose}>
             <div className={styles.formGrid}>
                 <label className={styles.label}>
+                    Ссылка на аватарку
                     <input
                         className={styles.input}
                         value={form.avatarUrl}
