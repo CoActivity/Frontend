@@ -323,13 +323,11 @@ const CreateEventModal = ({ open, onClose, interests = [], onCreate }) => {
 
     const submit = async () => {
         try {
-            const start = new Date(form.startTime).getTime();
-            const end = new Date(form.endTime).getTime();
+            const startDateTimeStr = `${form.startDate}T${form.startTime}:00`;
+            const endDateTimeStr = `${form.endDate}T${form.endTime}:00`;
 
-            if (!form.startTime || !form.endTime) {
-                alert('Пожалуйста, укажите и начало, и конец мероприятия.');
-                return;
-            }
+            const start = new Date(startDateTimeStr).getTime();
+            const end = new Date(endDateTimeStr).getTime();
 
             if (start >= end) {
                 alert('Ошибка: Время начала мероприятия должно быть раньше времени его окончания.');
